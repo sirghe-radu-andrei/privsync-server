@@ -8,7 +8,7 @@ import * as general from './utils.js'
 let passes = {};
 
 let config = {
-    files: '/srv/local/private_synchronizer/data',
+    files: '/srv/privsync/data',
     local_user: 'privsync',
     local_home: '/home/privsync',
     key_name: 'server',

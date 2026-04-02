@@ -1,7 +1,7 @@
 import * as crypto from 'crypto'
 
 export let config = {
-    prefix: '/srv/private_synchronizer',
+    prefix: '/srv/privsync',
     pass_file: 'passwords.json',
     config_file: 'config.json',
     keys_folder: 'keys',
