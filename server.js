@@ -1,6 +1,7 @@
-import * as http from 'http';
+import * as http from 'https';
 import * as fs from 'fs/promises';
 import * as general from './utils.js'
+import * as spawn from 'child_process';
 
 /**
  * @type {Object.<string, {hash: string, salt: string}>}
@@ -9,8 +10,6 @@ let passes = {};
 
 let config = {
     files: '/srv/privsync/data',
-    local_user: 'privsync',
-    local_home: '/home/privsync',
     key_name: 'server',
     port: '8080',
     ssh_port: '22'
@@ -38,6 +37,7 @@ let utils = {
         if (await utils.check_last_change(general.path('config_file'))) try {
             let new_config = JSON.parse(await fs.readFile(general.path('config_file')));
             if (new_config.files && new_config.files != config.files) {
+                utils.block_syncs = true;
                 for (let name in passes) try {
                     await fs.cp(config.files + '/' + name, new_config.files + '/' + name, {recursive: true});
                     await fs.rm(config.files + '/' + name, {recursive: true})
@@ -52,14 +52,6 @@ let utils = {
             }
             for (let attr in new_config) {
                 config[attr] = new_config[attr];
-            }
-            if (new_config.key_name && new_config.key_name != config.key_name) try {
-                let source = config.files + '/' + general.config.keys_folder + '/' + config.key_name;
-                let dest = config.local_home + '/.ssh/' + config.key_name;
-                await fs.cp(source, dest);
-                await fs.cp(source + ".pub", dest + ".pub");
-            } catch (err) {
-                console.log( {err: err, where: 'read_config_key'});
             }
             console.log(config);
         } catch (err) {
@@ -81,17 +73,21 @@ setInterval(utils.read_passes, 60000);
 
 /**
  * 
- * @param {{name: string, pass: string, key: string}} info User login & contact info.
+ * @param {{user: string, pass: string, key: string}} info User login & contact info.
  * @param {http.ServerResponse} res HTTPS response to fulfill.
  * @returns {Promise<void>} Nothing. 
  */
 async function parse_respond(info, res) {
-    let arr = general.auth(info.pass, info.name, passes);
-    /** @type {{msg: string, status: boolean, user?: string, port?: string}} */
+    let arr = general.auth(info.pass, info.user, passes);
+    /** @type {{msg: string, status: boolean, port?: string}} */
     let obj = {msg: arr[1], status: arr[0]};
     if (arr[0]) {
-        // await fs.appendFile(config.local_home + "/.ssh/authorized_keys", info.key);
-        obj.user = config.local_user;
+        command = "command='/usr/sbin/ssh-wrapper.sh "
+                    + info.user
+                    + "',no-agent-forwarding,no-port-forwarding,no-pty,no-user-rc,no-X11-forwarding "
+        await fs.writeFile('/srv/privsync/.temp.pub', info.key);
+        spawn.execSync('ssh-keygen -l -f /srv/privsync/.temp.pub');
+        await fs.appendFile('/home/privsync/.ssh/authorized_keys', command + info.key);
         obj.port = config.ssh_port;
     }
     res.statusCode = 200;
@@ -103,7 +99,7 @@ async function parse_respond(info, res) {
 }
 
 async function main() {
-    server = http.createServer(async (req, res) => {
+    server = http.createServer({}, async (req, res) => {
         if (req.method == "POST") {
             let data = "";
             req.setEncoding('utf-8').on('data', (chunk) => {

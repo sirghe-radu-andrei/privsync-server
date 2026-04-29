@@ -22,6 +22,10 @@ async function sync_to_file(object, change, file_path) {
     await fs.writeFile(file_path, JSON.stringify(object));
 }
 
+function help() {
+    
+}
+
 proc.stdin.on('data', async (data) => {
     let cmd = data.toString('utf-8');
     let params = cmd.trim().split(" ").filter((word, i, a) => word != "");
@@ -30,7 +34,7 @@ proc.stdin.on('data', async (data) => {
             console.log("Command syntax:\n" +
                 "\t* help\n" +
                 "\t* add <username> <pasword>\n" +
-                "\t* config <setting> <value>\n" +
+                "\t* set <setting> <value>\n" +
                 "\t* exit\n" +
                 "\t* remove <username> <password>\n" +
                 "Available settings: 'files' - where the bulk data should be stored");
@@ -78,16 +82,16 @@ proc.stdin.on('data', async (data) => {
             }
         }
         if (params[0].match(/^ge?n?-?k?e?y?/)) {
-            let name = params[1] || '';
-            if (!name.match(/[-a-zA-Z_0-9]+/)) {
-                console.log("Name should be alphanumeric with optional dashes and underscores!");
-            } else {
-                try {
-                    console.log(spawn.execSync("ssh-keygen -N '' -f '" + general.path('keys_folder') + '/' + name + "'").toString('utf-8'));
-                } catch (err) {
-                    console.log(err);
-                }
+            try {
+                console.log(spawn.execSync("ssh-keygen -N '' -f '" + general.path('keys_folder') + '/server\'').toString('utf-8'));
+            } catch (err) {
+                console.log(err);
             }
+        }
+        if (params[0].match(/^se?t?/)) {
+            await sync_to_file(config, (cfg) => {
+                cfg[params[1]] = params.slice(2).join(" ");
+            }, general.path('config_file'));
         }
     }
     proc.stdout.write("> ");
