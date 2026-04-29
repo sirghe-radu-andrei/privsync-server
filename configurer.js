@@ -50,10 +50,10 @@ proc.stdin.on('data', async (data) => {
             } else {
                 let salt = crypto.randomBytes(64).toString(general.config.encoding);
                 try {
-                    await fs.mkdir(config.files + '/' + name);
+                    await fs.mkdir(config.files + '/' + name, {mode: 0o777, recursive: true});
                     try {
                         await sync_to_file(passes, (passes) => {
-                            passes[name] = {salt: salt, hash: hash(salt, pass)}
+                            passes[name] = {salt: salt, hash: general.hash(salt, pass)}
                         }, general.path('pass_file'));
                     } catch (err) {
                         console.log("Error when writing password master file!");
