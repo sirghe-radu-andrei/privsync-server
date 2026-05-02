@@ -23,21 +23,28 @@ async function sync_to_file(object, change, file_path) {
 }
 
 function help() {
-    
+    console.log("Command syntax:\n" +
+        "\t* help\n" +
+        "\t* add <username> <pasword>\n" +
+        "\t* set <setting> <value>\n" +
+        "\t* exit\n" +
+        "\t* remove <username> <password>\n" +
+        "\t* cert\n" +
+        "\t* gen-key" +
+        "\t* update" +
+        "Available settings: 'files' - where the bulk data should be stored\n" +
+        "                    'ssh_port' - SSH port that's open to the internet\n" +
+        "                    'port' - HTTPS port");
 }
 
 proc.stdin.on('data', async (data) => {
     let cmd = data.toString('utf-8');
-    let params = cmd.trim().split(" ").filter((word, i, a) => word != "");
+    let params = cmd.trim().split(" ").filter((word) => word != "");
+    let has_matched = false;
     if (params.length > 0) {
         if (params[0].match(/^he?l?p?/)) {
-            console.log("Command syntax:\n" +
-                "\t* help\n" +
-                "\t* add <username> <pasword>\n" +
-                "\t* set <setting> <value>\n" +
-                "\t* exit\n" +
-                "\t* remove <username> <password>\n" +
-                "Available settings: 'files' - where the bulk data should be stored");
+            help();
+            has_matched = true;
         }
         if (params[0].match(/^ad?d?/)) {
             let name = params[1] || '';
@@ -62,6 +69,7 @@ proc.stdin.on('data', async (data) => {
                     console.log("Error when creating new user's folder!");
                 }
             }
+            has_matched = true;
         }
         if (params[0].match(/^ex?i?t?/)) {
             proc.exit(0);
@@ -80,6 +88,7 @@ proc.stdin.on('data', async (data) => {
             } catch (err) {
                 console.log("Error when writing password master file!");
             }
+            has_matched = true;
         }
         if (params[0].match(/^ge?n?-?k?e?y?/)) {
             try {
@@ -87,11 +96,26 @@ proc.stdin.on('data', async (data) => {
             } catch (err) {
                 console.log(err);
             }
+            has_matched = true;
         }
         if (params[0].match(/^se?t?/)) {
             await sync_to_file(config, (cfg) => {
                 cfg[params[1]] = params.slice(2).join(" ");
             }, general.path('config_file'));
+            has_matched = true;
+        }
+        if (params[0].match(/^ce?r?t/)) {
+            try {
+                console.log(spawn.execSync("openssl genrsa -out /srv/privsync/keys/certificate.key 2048"));
+                console.log(spawn.execSync("openssl req -new -key /srv/privsync/keys/certificate.key -out /srv/privsync/keys/certificate.csr"));
+                console.log(spawn.execSync("openssl x509 -req -days 365 -in /srv/privsync/keys/certificate.csr -signkey /srv/privsync/keys/certificate.key -out /srv/privsync/keys/certificate.crt"));
+            } catch (err) {
+                console.log(err);
+            }
+            has_matched = true;
+        }
+        if (!has_matched) {
+            help()
         }
     }
     proc.stdout.write("> ");

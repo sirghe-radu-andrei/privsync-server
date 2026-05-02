@@ -10,7 +10,6 @@ let passes = {};
 
 let config = {
     files: '/srv/privsync/data',
-    key_name: 'server',
     port: '8080',
     ssh_port: '22'
 };
@@ -99,7 +98,7 @@ async function parse_respond(info, res) {
 }
 
 async function main() {
-    server = http.createServer({}, async (req, res) => {
+    server = http.createServer({key: "/srv/privsync/keys/certificate.key", cert: "/srv/privsync/keys/certificate.crt"}, async (req, res) => {
         if (req.method == "POST") {
             let data = "";
             req.setEncoding('utf-8').on('data', (chunk) => {
