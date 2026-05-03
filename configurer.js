@@ -107,7 +107,7 @@ proc.stdin.on('data', async (data) => {
         if (params[0].match(/^ce?r?t/)) {
             try {
                 console.log(spawn.execSync("openssl genrsa -out /srv/privsync/keys/certificate.key 2048"));
-                console.log(spawn.execSync("openssl req -new -key /srv/privsync/keys/certificate.key -out /srv/privsync/keys/certificate.csr"));
+                console.log(spawn.execSync("echo -e '.\\n.\\n\\nPrivSync\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n' | openssl req -new -key /srv/privsync/keys/certificate.key -out /srv/privsync/keys/certificate.csr"));
                 console.log(spawn.execSync("openssl x509 -req -days 365 -in /srv/privsync/keys/certificate.csr -signkey /srv/privsync/keys/certificate.key -out /srv/privsync/keys/certificate.crt"));
             } catch (err) {
                 console.log(err);
