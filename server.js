@@ -47,7 +47,7 @@ let utils = {
             }
             if (new_config.port && new_config.port != config.port) {
                 server.close();
-                server.listen(Number.parseInt(new_config.port, 10));
+                server.listen(Number.parseInt(new_config.port, 10), "0.0.0.0");
             }
             for (let attr in new_config) {
                 config[attr] = new_config[attr];
@@ -122,7 +122,7 @@ async function main() {
     });
     await utils.read_config();
     await utils.read_passes();
-    server.listen(Number.parseInt(config.port, 10))
+    server.listen(Number.parseInt(config.port, 10), "0.0.0.0");
 }
 
 main();
