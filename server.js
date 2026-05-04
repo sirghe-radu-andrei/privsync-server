@@ -87,7 +87,7 @@ async function parse_respond(info, res) {
         await fs.writeFile('/srv/privsync/.temp.pub', info.key);
         try {
             spawn.execSync('ssh-keygen -l -f /srv/privsync/.temp.pub');
-            await fs.appendFile('/home/privsync/.ssh/authorized_keys', command + info.key);
+            await fs.appendFile('/home/privsync/.ssh/authorized_keys', command + info.key + '\n');
             obj.port = config.ssh_port;
         } catch (e) {}
     }
