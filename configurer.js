@@ -4,7 +4,11 @@ import * as crypto from 'crypto';
 import * as general from './utils.js';
 import * as spawn from 'child_process';
 
-let config = {};
+let config = {
+    files: '/srv/privsync/data',
+    port: '8080',
+    ssh_port: '22'
+};
 let passes = {};
 
 /**
@@ -122,7 +126,10 @@ proc.stdin.on('data', async (data) => {
 })
 
 async function main() {
-    config = JSON.parse(await fs.readFile(general.path('config_file')));
+    let new_config = JSON.parse(await fs.readFile(general.path('config_file')));
+    for (field in new_config) {
+        config[field] = new_config[field]
+    }
     passes = JSON.parse(await fs.readFile(general.path('pass_file')));
     proc.stdout.write("> ");
 }
