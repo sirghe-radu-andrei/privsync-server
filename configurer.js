@@ -127,7 +127,7 @@ proc.stdin.on('data', async (data) => {
 
 async function main() {
     let new_config = JSON.parse(await fs.readFile(general.path('config_file')));
-    for (field in new_config) {
+    for (let field in new_config) {
         config[field] = new_config[field]
     }
     passes = JSON.parse(await fs.readFile(general.path('pass_file')));
