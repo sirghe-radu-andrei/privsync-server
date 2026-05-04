@@ -81,13 +81,15 @@ async function parse_respond(info, res) {
     /** @type {{msg: string, status: boolean, port?: string}} */
     let obj = {msg: arr[1], status: arr[0]};
     if (arr[0]) {
-        command = "command='/usr/sbin/ssh-wrapper.sh "
+        let command = "command='/usr/sbin/ssh-wrapper.sh "
                     + info.user
                     + "',no-agent-forwarding,no-port-forwarding,no-pty,no-user-rc,no-X11-forwarding "
         await fs.writeFile('/srv/privsync/.temp.pub', info.key);
-        spawn.execSync('ssh-keygen -l -f /srv/privsync/.temp.pub');
-        await fs.appendFile('/home/privsync/.ssh/authorized_keys', command + info.key);
-        obj.port = config.ssh_port;
+        try {
+            spawn.execSync('ssh-keygen -l -f /srv/privsync/.temp.pub');
+            await fs.appendFile('/home/privsync/.ssh/authorized_keys', command + info.key);
+            obj.port = config.ssh_port;
+        } catch (e) {}
     }
     res.statusCode = 200;
     res.write(JSON.stringify(obj), (err) => {
