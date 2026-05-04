@@ -92,6 +92,7 @@ async function parse_respond(info, res) {
         } catch (e) {}
     }
     res.statusCode = 200;
+    res.setHeader('Content-Type', 'application/json');
     res.write(JSON.stringify(obj), (err) => {
         if (!err) {
             res.end();
