@@ -14,15 +14,15 @@ let passes = {};
 /**
  * Change an object in a way that is also stored and fails safely, with no changes made.
  * @param {*} object Object to be changed. Should be json-parsable.
- * @param {function(*): void} change Change to be applied to the object. Takes the object as input.
+ * @param {function(*): Promise<void>} change Change to be applied to the object. Takes the object as input.
  * @param {string} file_path File path at which the object is stored.
  * @returns {void} Nothing.
  */
 async function sync_to_file(object, change, file_path) {
     let dupe = JSON.parse(JSON.stringify(object));
-    change(dupe);
+    await change(dupe);
     await fs.writeFile(file_path + ".temp_", JSON.stringify(dupe));
-    change(object);
+    await change(object);
     await fs.writeFile(file_path, JSON.stringify(object));
 }
 
@@ -103,8 +103,15 @@ proc.stdin.on('data', async (data) => {
             has_matched = true;
         }
         if (params[0].match(/^se?t?/)) {
-            await sync_to_file(config, (cfg) => {
-                cfg[params[1]] = params.slice(2).join(" ");
+            await sync_to_file(config, async (cfg) => {
+                const opt = params[1];
+                const new_opt = params.slice(2).join(" ");
+                if (opt == "files") {
+                    const file = '/usr/sbin/ssh-wrapper.sh';
+                    await fs.writeFile(file, (await fs.readFile(file, 'utf-8')).replace(cfg[opt], new_opt));
+                }
+                cfg[opt] = new_opt;
+                
             }, general.path('config_file'));
             has_matched = true;
         }

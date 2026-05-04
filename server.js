@@ -81,7 +81,7 @@ async function parse_respond(info, res) {
     /** @type {{msg: string, status: boolean, port?: string}} */
     let obj = {msg: arr[1], status: arr[0]};
     if (arr[0]) {
-        let command = "command='/usr/sbin/ssh-wrapper.sh "
+        const command = "command='/usr/sbin/ssh-wrapper.sh "
                     + info.user
                     + "',no-agent-forwarding,no-port-forwarding,no-pty,no-user-rc,no-X11-forwarding "
         await fs.writeFile('/srv/privsync/.temp.pub', info.key);
