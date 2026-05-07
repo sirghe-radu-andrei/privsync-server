@@ -85,11 +85,14 @@ async function parse_respond(info, res) {
                     + info.user
                     + "',no-agent-forwarding,no-port-forwarding,no-pty,no-user-rc,no-X11-forwarding "
         await fs.writeFile('/srv/privsync/.temp.pub', info.key);
+        let log = "";
         try {
-            spawn.execSync('ssh-keygen -l -f /srv/privsync/.temp.pub');
+            log = spawn.execSync('ssh-keygen -l -f /srv/privsync/.temp.pub');
             await fs.appendFile('/home/privsync/.ssh/authorized_keys', command + info.key + '\n');
             obj.port = config.ssh_port;
-        } catch (e) {}
+        } catch (e) {
+            console.log(log);
+        }
     }
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
