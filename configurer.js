@@ -128,7 +128,7 @@ proc.stdin.on('data', async (data) => {
             has_matched = true;
         }
         if (!has_matched) {
-            help()
+            help();
         }
     }
     proc.stdout.write("> ");
