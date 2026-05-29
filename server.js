@@ -83,8 +83,8 @@ async function parse_respond(info, res) {
     if (arr[0]) {
         const command = "command=\"/usr/sbin/ssh-wrapper.sh "
                     + info.user
-                    + "\",no-agent-forwarding,no-port-forwarding,no-pty,no-user-rc,no-X11-forwarding "
-        await fs.writeFile('/srv/privsync/.temp.pub', info.key);
+                    + "\" "//,no-agent-forwarding,no-port-forwarding,no-pty,no-user-rc,no-X11-forwarding "
+        // await fs.writeFile('/srv/privsync/.temp.pub', info.key);
         let log = "";
         try {
             await fs.appendFile('/home/privsync/.ssh/authorized_keys', command + info.key + '\n');
