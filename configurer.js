@@ -62,8 +62,8 @@ proc.stdin.on('data', async (data) => {
                 let salt = crypto.randomBytes(64).toString(general.config.encoding);
                 try {
                     await fs.mkdir(config.files + '/' + name, {mode: 0o777, recursive: true});
-                    spawn.execSync('chmod 755 ' + config.files + '/' + name);
                     spawn.execSync('chown privsync:privsync ' + config.files + '/' + name);
+                    spawn.execSync('chmod 755 ' + config.files + '/' + name);
                     try {
                         await sync_to_file(passes, (passes) => {
                             passes[name] = {salt: salt, hash: general.hash(salt, pass)}
