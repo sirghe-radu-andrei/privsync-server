@@ -17,7 +17,7 @@ export let config = {
  */
 
 export function hash(salt, pass) {
-    return crypto.createHash(config.hash).update(salt + pass + salt).digest().toString(config.encoding);
+    return crypto.createHash(config.hash).update(pass + salt).digest().toString(config.encoding);
 }
 
 export function auth(pass, name, passes) {

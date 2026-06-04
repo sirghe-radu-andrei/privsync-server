@@ -36,14 +36,12 @@ let utils = {
         if (await utils.check_last_change(general.path('config_file'))) try {
             let new_config = JSON.parse(await fs.readFile(general.path('config_file')));
             if (new_config.files && new_config.files != config.files) {
-                utils.block_syncs = true;
                 for (let name in passes) try {
                     await fs.cp(config.files + '/' + name, new_config.files + '/' + name, {recursive: true});
                     await fs.rm(config.files + '/' + name, {recursive: true})
                 } catch (err) {
-                    console.log( {err: err, where: 'read_config_move'});
+                    console.log({err: err, where: 'read_config_move'});
                 }
-                utils.block_syncs = false;
             }
             if (new_config.port && new_config.port != config.port) {
                 server.close();
@@ -81,15 +79,14 @@ async function parse_respond(info, res) {
     /** @type {{msg: string, status: boolean, port?: string}} */
     let obj = {msg: arr[1], status: arr[0]};
     if (arr[0]) {
-        const command = "command=\"/usr/sbin/ssh-wrapper.sh "
-                    + info.user
-                    + "\" "//,no-agent-forwarding,no-port-forwarding,no-pty,no-user-rc,no-X11-forwarding "
-        // await fs.writeFile('/srv/privsync/.temp.pub', info.key);
-        let log = "";
-        try {
-            await fs.appendFile('/home/privsync/.ssh/authorized_keys', command + info.key + '\n');
-            obj.port = config.ssh_port;
-        } catch (e) {}
+        const command = `command="/usr/sbin/ssh-wrapper.sh ${info.user}" `;
+        const entry = command + info.key + '\n';
+        
+        const currentKeys = await fs.readFile('/home/privsync/.ssh/authorized_keys', 'utf-8').catch(() => "");
+        if (!currentKeys.includes(info.key)) {
+            await fs.appendFile('/home/privsync/.ssh/authorized_keys', entry);
+        }
+        obj.port = config.ssh_port;
     }
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
@@ -100,12 +97,24 @@ async function parse_respond(info, res) {
     })
 }
 
+// Helper to check if a specific user has a key in authorized_keys
+async function check_user_key(username) {
+    try {
+        const content = await fs.readFile('/home/privsync/.ssh/authorized_keys', 'utf-8');
+        // Look for the specific command wrapper line for this user
+        return content.includes(`/usr/sbin/ssh-wrapper.sh ${username}`);
+    } catch (err) {
+        return false;
+    }
+}
+
 async function main() {
     server = http.createServer({
         key: await fs.readFile("/srv/privsync/keys/certificate.key"), 
         cert: await fs.readFile("/srv/privsync/keys/certificate.crt")
     }, async (req, res) => {
-        if (req.method == "POST") {
+        const url = new URL(req.url, `https://${req.headers.host}`);
+        if (req.method === "POST") {
             let data = "";
             req.setEncoding('utf-8').on('data', (chunk) => {
                 data += chunk;
@@ -118,6 +127,22 @@ async function main() {
                     console.log({err: err, where: 'login 2'});
                 }
             });
+        } 
+        // NEW GET ROUTE
+        else if (req.method === "GET" && url.pathname.startsWith("/check-login/")) {
+            const username = url.pathname.split('/').pop();
+            const hasKey = await check_user_key(username);
+            
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(hasKey ? { 
+                status: true, 
+                port: config.ssh_port,
+                msg: "Key verified"
+            } : {
+                status: false,
+                msg: "No key found"
+            }));
         } else {
             res.statusCode = 404;
             res.end();
