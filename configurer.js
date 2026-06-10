@@ -34,8 +34,8 @@ function help() {
         "\t* exit\n" +
         "\t* remove <username> <password>\n" +
         "\t* cert\n" +
-        "\t* gen-key" +
-        "\t* update" +
+        "\t* gen-key\n" +
+        "\t* update\n" +
         "Available settings: 'files' - where the bulk data should be stored\n" +
         "                    'ssh_port' - SSH port that's open to the internet\n" +
         "                    'port' - HTTPS port");
@@ -61,9 +61,9 @@ proc.stdin.on('data', async (data) => {
             } else {
                 let salt = crypto.randomBytes(64).toString(general.config.encoding);
                 try {
-                    await fs.mkdir(config.files + '/' + name, {mode: 0o777, recursive: true});
-                    spawn.execSync('chown privsync:privsync ' + config.files + '/' + name);
-                    spawn.execSync('chmod 755 ' + config.files + '/' + name);
+                    await fs.mkdir(config.files + '/' + name + '/latest', {mode: 0o777, recursive: true});
+                    spawn.execSync('chown -R privsync:privsync ' + config.files + '/' + name);
+                    spawn.execSync('chmod -R 755 ' + config.files + '/' + name);
                     try {
                         await sync_to_file(passes, (passes) => {
                             passes[name] = {salt: salt, hash: general.hash(salt, pass)}
