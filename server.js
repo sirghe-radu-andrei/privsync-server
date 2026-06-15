@@ -79,7 +79,7 @@ async function parse_respond(info, res) {
     /** @type {{msg: string, status: boolean, port?: string}} */
     let obj = {msg: arr[1], status: arr[0]};
     if (arr[0]) {
-        const command = `command="/usr/sbin/ssh-wrapper.sh ${info.user}",no-x11-forwarding,no-pty`;
+        const command = `command="/usr/sbin/ssh-wrapper.sh ${info.user}",no-x11-forwarding,no-pty `;
         const entry = command + info.key.replaceAll('\n', '').replaceAll('\r', '') + '\n';
         
         const currentKeys = await fs.readFile('/home/privsync/.ssh/authorized_keys', 'utf-8').catch(() => "");
